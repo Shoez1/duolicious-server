@@ -1,0 +1,111 @@
+services:
+  # API Web Service (porta principal, ex: 5000)
+  - type: web
+    name: duolicious-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn service.api:app --bind 0.0.0.0:$PORT --timeout 0 --workers 1
+    envVars:
+      - key: DUO_ENV
+        value: prod
+      - key: DUO_DB_HOST
+        fromDatabase:
+          name: duo-db
+          property: host
+      - key: DUO_DB_PORT
+        fromDatabase:
+          name: duo-db
+          property: port
+      - key: DUO_DB_USER
+        fromDatabase:
+          name: duo-db
+          property: user
+      - key: DUO_DB_PASS
+        fromDatabase:
+          name: duo-db
+          property: password
+      - key: DUO_REDIS_HOST
+        fromService:
+          type: redis
+          name: duo-redis
+          property: host
+      - key: DUO_REDIS_PORT
+        fromService:
+          type: redis
+          name: duo-redis
+          property: port
+      - key: DUO_CORS_ORIGINS
+        value: "*"
+      - key: DUO_R2_BUCKET_NAME
+        value: s3-mock-bucket
+      - key: DUO_R2_AUDIO_BUCKET_NAME
+        value: s3-mock-audio-bucket
+      - key: DUO_R2_ACCT_ID
+        value: dev
+      - key: DUO_R2_ACCESS_KEY_ID
+        value: s3-mock-access-key-id
+      - key: DUO_R2_ACCESS_KEY_SECRET
+        value: s3-mock-secret-access-key-secret
+      - key: DUO_BOTO_ENDPOINT_URL
+        value: http://localhost:9090
+      - key: DUO_SMTP_HOST
+        value: smtp
+      - key: DUO_SMTP_PORT
+        value: 1025
+      - key: DUO_SMTP_USER
+        value: unused
+      - key: DUO_SMTP_PASS
+        value: unused
+      - key: DUO_REPORT_EMAIL
+        value: duolicious@example.com 20 a@example.com 0
+
+  # Chat Web Service (porta separada, ex: 5443)
+  - type: web
+    name: duolicious-chat
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn service.chat:app --host 0.0.0.0 --port $PORT --ws-max-size 10485760 --workers 1
+    envVars:
+      - key: DUO_ENV
+        value: prod
+      - key: DUO_DB_HOST
+        fromDatabase:
+          name: duo-db
+          property: host
+      - key: DUO_DB_PORT
+        fromDatabase:
+          name: duo-db
+          property: port
+      - key: DUO_DB_USER
+        fromDatabase:
+          name: duo-db
+          property: user
+      - key: DUO_DB_PASS
+        fromDatabase:
+          name: duo-db
+          property: password
+      - key: DUO_R2_AUDIO_BUCKET_NAME
+        value: s3-mock-audio-bucket
+      - key: DUO_R2_ACCT_ID
+        value: dev
+      - key: DUO_R2_ACCESS_KEY_ID
+        value: s3-mock-access-key-id
+      - key: DUO_R2_ACCESS_KEY_SECRET
+        value: s3-mock-secret-access-key-secret
+      - key: DUO_BOTO_ENDPOINT_URL
+        value: http://localhost:9090
+
+  # Redis
+  - type: redis
+    name: duo-redis
+    plan: free
+    ipAllowList: []
+
+  # PostgreSQL
+  - type: pserv
+    name: duo-db
+    plan: free
+    databaseName: duo_api
+    user: postgres
