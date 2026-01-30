@@ -4,7 +4,7 @@ services:
     name: duolicious-api
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && bash bin/post-install.sh
     startCommand: gunicorn service.api:app --bind 0.0.0.0:$PORT --timeout 0 --workers 1
     envVars:
       - key: DUO_ENV
@@ -65,7 +65,7 @@ services:
     name: duolicious-chat
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && bash bin/post-install.sh
     startCommand: uvicorn service.chat:app --host 0.0.0.0 --port $PORT --ws-max-size 10485760 --workers 1
     envVars:
       - key: DUO_ENV
