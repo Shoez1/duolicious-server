@@ -4,10 +4,10 @@ def create_dbs():
     import psycopg
     import time
 
-    DB_HOST = os.environ['DUO_DB_HOST']
-    DB_PORT = os.environ['DUO_DB_PORT']
-    DB_USER = os.environ['DUO_DB_USER']
-    DB_PASS = os.environ['DUO_DB_PASS']
+    DB_HOST = os.getenv('DUO_DB_HOST') or 'localhost'
+    DB_PORT = os.getenv('DUO_DB_PORT') or '5432'
+    DB_USER = os.getenv('DUO_DB_USER') or 'postgres'
+    DB_PASS = os.getenv('DUO_DB_PASS') or 'postgres'
 
     _conninfo = psycopg.conninfo.make_conninfo(
         host=DB_HOST,

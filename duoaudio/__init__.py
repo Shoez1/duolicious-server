@@ -11,10 +11,10 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import boto3
 
-R2_AUDIO_BUCKET_NAME = os.getenv('DUO_R2_AUDIO_BUCKET_NAME')
-R2_ACCT_ID = os.getenv('DUO_R2_ACCT_ID')
-R2_ACCESS_KEY_ID = os.getenv('DUO_R2_ACCESS_KEY_ID')
-R2_ACCESS_KEY_SECRET = os.getenv('DUO_R2_ACCESS_KEY_SECRET')
+R2_AUDIO_BUCKET_NAME = os.getenv('DUO_R2_AUDIO_BUCKET_NAME') or 's3-mock-audio-bucket'
+R2_ACCT_ID = os.getenv('DUO_R2_ACCT_ID') or 'dev'
+R2_ACCESS_KEY_ID = os.getenv('DUO_R2_ACCESS_KEY_ID') or 's3-mock-access-key-id'
+R2_ACCESS_KEY_SECRET = os.getenv('DUO_R2_ACCESS_KEY_SECRET') or 's3-mock-secret-access-key-secret'
 
 BOTO_ENDPOINT_URL = os.getenv(
     'DUO_BOTO_ENDPOINT_URL',

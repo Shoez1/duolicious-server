@@ -25,10 +25,10 @@ CHECK_PHOTOS_POLL_SECONDS = int(os.environ.get(
     str(1), # 1 second
 ))
 
-R2_ACCT_ID           = os.environ['DUO_R2_ACCT_ID']
-R2_ACCESS_KEY_ID     = os.environ['DUO_R2_ACCESS_KEY_ID']
-R2_ACCESS_KEY_SECRET = os.environ['DUO_R2_ACCESS_KEY_SECRET']
-R2_BUCKET_NAME       = os.environ['DUO_R2_BUCKET_NAME']
+R2_ACCT_ID           = os.getenv('DUO_R2_ACCT_ID') or 'dev'
+R2_ACCESS_KEY_ID     = os.getenv('DUO_R2_ACCESS_KEY_ID') or 's3-mock-access-key-id'
+R2_ACCESS_KEY_SECRET = os.getenv('DUO_R2_ACCESS_KEY_SECRET') or 's3-mock-secret-access-key-secret'
+R2_BUCKET_NAME       = os.getenv('DUO_R2_BUCKET_NAME') or 's3-mock-bucket'
 
 BOTO_ENDPOINT_URL = os.getenv(
     'DUO_BOTO_ENDPOINT_URL',

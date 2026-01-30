@@ -167,7 +167,7 @@ def parse_email_string(email_string):
     return result
 
 
-REPORT_EMAIL = os.environ['DUO_REPORT_EMAIL']
+REPORT_EMAIL = os.getenv('DUO_REPORT_EMAIL') or 'duolicious@example.com 20 a@example.com 0'
 REPORT_EMAILS = parse_email_string(REPORT_EMAIL)
 PRIMARY_REPORT_EMAIL = REPORT_EMAILS[0].email
 print(REPORT_EMAILS)
