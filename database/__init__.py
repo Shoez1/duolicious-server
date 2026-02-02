@@ -5,11 +5,42 @@ import random
 import threading
 import time
 import traceback
+from urllib.parse import urlparse
 
-DB_HOST = os.getenv('DUO_DB_HOST') or 'localhost'
-DB_PORT = os.getenv('DUO_DB_PORT') or '5432'
-DB_USER = os.getenv('DUO_DB_USER') or 'postgres'
-DB_PASS = os.getenv('DUO_DB_PASS') or 'postgres'
+_database_url = os.getenv('DATABASE_URL')
+
+DB_HOST = os.getenv('DUO_DB_HOST')
+DB_PORT = os.getenv('DUO_DB_PORT')
+DB_USER = os.getenv('DUO_DB_USER')
+DB_PASS = os.getenv('DUO_DB_PASS')
+DB_NAME = os.getenv('DUO_DB_NAME')
+
+# Render PostgreSQL hardcoded (apenas para teste)
+if not DB_HOST and not _database_url:
+    DB_HOST = 'dpg-d5vvvp94tr6s73a48oi0-a.oregon-postgres.render.com'
+    DB_PORT = '5432'
+    DB_USER = 'duo_api_user'
+    DB_PASS = 'HvBbiNekPQh0yrDythvBFTeStIL3vW5r'
+    DB_NAME = 'duo_api'
+
+if _database_url and (not DB_HOST or not DB_PORT or not DB_USER or not DB_PASS or not DB_NAME):
+    _u = urlparse(_database_url)
+    if not DB_HOST:
+        DB_HOST = _u.hostname
+    if not DB_PORT:
+        DB_PORT = str(_u.port or 5432)
+    if not DB_USER:
+        DB_USER = _u.username
+    if not DB_PASS:
+        DB_PASS = _u.password
+    if not DB_NAME:
+        DB_NAME = (_u.path or '').lstrip('/') or None
+
+DB_HOST = DB_HOST or 'localhost'
+DB_PORT = DB_PORT or '5432'
+DB_USER = DB_USER or 'postgres'
+DB_PASS = DB_PASS or 'postgres'
+DB_NAME = DB_NAME or 'duo_api'
 
 _valid_isolation_levels = [
     'SERIALIZABLE',
@@ -33,7 +64,7 @@ _coninfo_args = dict(
 )
 
 _api_conninfo = psycopg.conninfo.make_conninfo(
-    **(_coninfo_args | dict(dbname='duo_api'))
+    **(_coninfo_args | dict(dbname=DB_NAME))
 )
 
 _api_conn  = None
@@ -115,4 +146,6 @@ def _check_api_connection_forever():
             print(traceback.format_exc())
         time.sleep(random.randint(30, 90))
 
-threading.Thread(target=_check_api_connection_forever,  daemon=True).start()
+_disable_check = os.getenv('DUO_DB_DISABLE_CHECK', 'false').lower() in ['true', 't', '1', 'yes', 'y']
+if not _disable_check:
+    threading.Thread(target=_check_api_connection_forever,  daemon=True).start()
