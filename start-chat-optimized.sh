@@ -11,27 +11,6 @@ if [ "${DUO_DISABLE_SPACY}" != "true" ]; then
     fi
 fi
 
-# Baixa dados NLTK se necessário
-python -c "
-import nltk
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
-try:
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    nltk.download('wordnet')
-try:
-    nltk.data.find('corpora/omw-1.4')
-except LookupError:
-    nltk.download('omw-1.4')
-"
-
 echo "Starting Chat with memory optimizations..."
 exec uvicorn service.chat:app \
     --host 0.0.0.0 \

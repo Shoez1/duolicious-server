@@ -3,8 +3,10 @@
 
 set -e
 
-echo "Installing spaCy model..."
-python -m spacy download en_core_web_sm
+if [ "${DUO_DISABLE_SPACY}" != "true" ]; then
+    echo "Installing spaCy model..."
+    python -m spacy download en_core_web_sm
+fi
 
 echo "Downloading NLTK data..."
 python -c "
