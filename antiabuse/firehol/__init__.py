@@ -26,7 +26,8 @@ import traceback
 from datetime import timedelta
 from pathlib import Path
 from typing import Dict, Iterable, Tuple, Union
-from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 import threading
 
 # ---------------------------------------------------------------------------
@@ -155,8 +156,21 @@ def _download_or_load(name: ListName, update_interval: timedelta) -> str:
         # Cache miss or stale – download
         url = _blocklist_url(name)
         print(f'Downloading {url}')
-        with urlopen(url, timeout=30) as resp:
-            raw_bytes = resp.read()
+        try:
+            req = Request(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; Duolicious/1.0; +https://duolicious.app)",
+                },
+            )
+            with urlopen(req, timeout=30) as resp:
+                raw_bytes = resp.read()
+        except (HTTPError, URLError):
+            print(f'Warning: Failed downloading {url}; using cached copy if available')
+            print(traceback.format_exc())
+            if path.exists():
+                return path.read_text(encoding="utf-8", errors="ignore")
+            return ""
         print(f'Finished downloading {url}')
         text = raw_bytes.decode("utf-8", errors="ignore")
 
@@ -180,9 +194,11 @@ def _collect_all(lists: Iterable[ListName],
 
     for name in lists:
         raw = _download_or_load(name, update_interval)
+        if not raw:
+            continue
         v4, v6 = _parse_blocklist(raw)
         if not v4 and not v6:
-            raise ValueError(f"FireHOL list '{name}' appears to be empty.")
+            continue
         fresh[name] = (v4, v6)
 
     return fresh
@@ -391,10 +407,14 @@ class Firehol:
 # Convenience singleton
 # ---------------------------------------------------------------------------
 
+_firehol_disable = os.getenv('DUO_FIREHOL_DISABLE', 'false').lower() in ['true', 't', '1', 'yes', 'y']
+_firehol_start_updater = os.getenv('DUO_FIREHOL_START_UPDATER', 'true').lower() in ['true', 't', '1', 'yes', 'y']
+
 firehol = Firehol(
     lists=[
         "firehol_abusers_30d.netset",
         "firehol_anonymous.netset",
         "stopforumspam_365d.ipset",
-    ]
+    ],
+    start_updater=(not _firehol_disable) and _firehol_start_updater,
 )

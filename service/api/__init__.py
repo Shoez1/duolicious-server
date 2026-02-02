@@ -293,6 +293,10 @@ def get_search(s: t.SessionInfo):
 def get_health():
     return 'status: ok'
 
+@get('/', limiter=limiter.exempt)
+def get_root():
+    return 'Duolicious API. Use /health'
+
 @aget('/me')
 def get_me_by_session(s: t.SessionInfo):
     return person.get_me(person_id_as_int=s.person_id)
