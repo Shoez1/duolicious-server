@@ -10,10 +10,10 @@ from contextlib import suppress
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-SMTP_HOST: str = os.environ["DUO_SMTP_HOST"]
-SMTP_PORT: int = int(os.environ["DUO_SMTP_PORT"])
-SMTP_USER: str = os.environ["DUO_SMTP_USER"]
-SMTP_PASS: str = os.environ["DUO_SMTP_PASS"]
+SMTP_HOST: str | None = os.getenv("DUO_SMTP_HOST")
+SMTP_PORT_RAW: str | None = os.getenv("DUO_SMTP_PORT")
+SMTP_USER: str | None = os.getenv("DUO_SMTP_USER")
+SMTP_PASS: str | None = os.getenv("DUO_SMTP_PASS")
 
 
 class Smtp:
@@ -151,8 +151,40 @@ class Smtp:
             self.quit()
 
 
-def make_aws_smtp() -> Smtp:
-    return Smtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)
+class NullSmtp:
+    def send(
+        self,
+        *,
+        subject: str,
+        body: str,
+        to_addr: str,
+        from_addr: str | None = None,
+        retries: int | None = None,
+        backoff: int | None = None,
+    ) -> None:
+        return None
+
+    def quit(self) -> None:
+        return None
 
 
-aws_smtp: Smtp = make_aws_smtp()
+def make_aws_smtp() -> Smtp | NullSmtp:
+    if not SMTP_HOST or not SMTP_PORT_RAW or not SMTP_USER or not SMTP_PASS:
+        print("SMTP not configured (missing DUO_SMTP_* env vars); emails disabled")
+        return NullSmtp()
+
+    try:
+        smtp_port: int = int(SMTP_PORT_RAW)
+    except Exception:
+        print("SMTP not configured (invalid DUO_SMTP_PORT); emails disabled")
+        return NullSmtp()
+
+    try:
+        return Smtp(SMTP_HOST, smtp_port, SMTP_USER, SMTP_PASS)
+    except Exception:
+        print("SMTP connection failed during startup; emails disabled")
+        print(traceback.format_exc())
+        return NullSmtp()
+
+
+aws_smtp: Smtp | NullSmtp = make_aws_smtp()
