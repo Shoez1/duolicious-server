@@ -3,10 +3,12 @@
 
 set -e
 
-# Instala modelo spaCy se não existir
-if ! python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null; then
-    echo "Installing spaCy model..."
-    python -m spacy download en_core_web_sm
+if [ "${DUO_DISABLE_SPACY}" != "true" ]; then
+    # Instala modelo spaCy se não existir
+    if ! python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null; then
+        echo "Installing spaCy model..."
+        python -m spacy download en_core_web_sm
+    fi
 fi
 
 # Baixa dados NLTK se necessário

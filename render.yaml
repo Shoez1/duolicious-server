@@ -9,6 +9,10 @@ services:
     envVars:
       - key: DUO_ENV
         value: prod
+      - key: DUO_DISABLE_SPACY
+        value: "true"
+      - key: DUO_DISABLE_HEIF
+        value: "true"
       - key: DUO_DB_HOST
         fromDatabase:
           name: duo-db
@@ -63,6 +67,8 @@ services:
         value: "true"
       - key: DUO_DB_DISABLE_CHECK
         value: "true"
+      - key: DUO_DISABLE_SPACY
+        value: "true"
 
   # Chat Web Service (porta separada, ex: 5443)
   - type: web
@@ -74,6 +80,8 @@ services:
     envVars:
       - key: DUO_ENV
         value: prod
+      - key: DUO_DISABLE_HEIF
+        value: "true"
       - key: DUO_DB_HOST
         fromDatabase:
           name: duo-db

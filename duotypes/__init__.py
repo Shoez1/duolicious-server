@@ -23,24 +23,69 @@ from pydantic import (
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from PIL import Image
-from pillow_heif import register_heif_opener
+import os
 import constants
 import io
 import base64
-from duoaudio import transcode_and_trim_audio_from_base64
 import traceback
-import antiabuse.antirude.displayname
-import antiabuse.antirude.education
-import antiabuse.antirude.occupation
-import antiabuse.antirude.profile
-import antiabuse.bannedphoto
-from antiabuse.antispam.urldetector import has_url
-from antiabuse.antispam.phonenumberdetector import detect_phone_numbers
-from antiabuse.antispam.solicitation import has_solicitation
 from util import human_readable_size_metric
 from duohash import md5
 
-register_heif_opener()
+_disable_heif = os.getenv('DUO_DISABLE_HEIF', 'false').lower() in ['true', 't', '1', 'yes', 'y']
+if not _disable_heif:
+    try:
+        from pillow_heif import register_heif_opener
+        register_heif_opener()
+    except Exception:
+        pass
+
+
+@cache
+def _antiabuse():
+    import antiabuse
+    return antiabuse
+
+
+@cache
+def _has_url():
+    from antiabuse.antispam.urldetector import has_url
+    return has_url
+
+
+@cache
+def _detect_phone_numbers():
+    from antiabuse.antispam.phonenumberdetector import detect_phone_numbers
+    return detect_phone_numbers
+
+
+@cache
+def _has_solicitation():
+    from antiabuse.antispam.solicitation import has_solicitation
+    return has_solicitation
+
+
+@cache
+def _is_rude_displayname():
+    from antiabuse.antirude.displayname import is_rude
+    return is_rude
+
+
+@cache
+def _is_rude_profile():
+    from antiabuse.antirude.profile import is_rude
+    return is_rude
+
+
+@cache
+def _is_rude_occupation():
+    from antiabuse.antirude.occupation import is_rude
+    return is_rude
+
+
+@cache
+def _is_rude_education():
+    from antiabuse.antirude.education import is_rude
+    return is_rude
 
 CLUB_PATTERN = r"""^[a-zA-Z0-9/#'"_-]+( [a-zA-Z0-9/#'"_-]+)*$"""
 CLUB_MAX_LEN = 42
@@ -108,6 +153,7 @@ class Base64AudioFile(BaseModel):
         if 'base64' in values and 'bytes' in values and 'transcoded' in values:
             return values
 
+        from duoaudio import transcode_and_trim_audio_from_base64
         response = transcode_and_trim_audio_from_base64(values['base64'])
 
         if isinstance(response, ValueError):
@@ -162,7 +208,7 @@ class Base64File(BaseModel):
             raise ValueError(f'Image invalid')
 
         md5_hash = md5(base64_value)
-        if antiabuse.bannedphoto.is_banned_photo(md5_hash):
+        if _antiabuse().bannedphoto.is_banned_photo(md5_hash):
             raise ValueError("That pic breaks the rules 🙈")
 
         width, height = image.size
@@ -325,7 +371,7 @@ class PatchOnboardeeInfo(BaseModel):
     def name_must_not_be_rude(cls, value):
         if value is None:
             return value
-        if antiabuse.antirude.displayname.is_rude(value):
+        if _is_rude_displayname()(value):
             raise ValueError('Too rude')
         return value
 
@@ -464,7 +510,7 @@ class PatchProfileInfo(BaseModel):
     def name_must_not_be_rude(cls, value):
         if value is None:
             return value
-        if antiabuse.antirude.displayname.is_rude(value):
+        if _is_rude_displayname()(value):
             raise ValueError('Too rude')
         return value
 
@@ -472,7 +518,7 @@ class PatchProfileInfo(BaseModel):
     def about_must_not_be_rude(cls, value):
         if value is None:
             return value
-        if antiabuse.antirude.profile.is_rude(value):
+        if _is_rude_profile()(value):
             raise ValueError('Too rude')
         return value
 
@@ -481,9 +527,9 @@ class PatchProfileInfo(BaseModel):
         if value is None:
             return value
         if \
-                has_url(value) or \
-                detect_phone_numbers(value) or \
-                has_solicitation(value):
+                _has_url()(value) or \
+                _detect_phone_numbers()(value) or \
+                _has_solicitation()(value):
             raise ValueError('Spam')
         return value
 
@@ -491,7 +537,7 @@ class PatchProfileInfo(BaseModel):
     def occupation_must_not_be_rude(cls, value):
         if value is None:
             return value
-        if antiabuse.antirude.occupation.is_rude(value):
+        if _is_rude_occupation()(value):
             raise ValueError('Too rude')
         return value
 
@@ -499,7 +545,7 @@ class PatchProfileInfo(BaseModel):
     def education_must_not_be_rude(cls, value):
         if value is None:
             return value
-        if antiabuse.antirude.education.is_rude(value):
+        if _is_rude_education()(value):
             raise ValueError('Too rude')
         return value
 

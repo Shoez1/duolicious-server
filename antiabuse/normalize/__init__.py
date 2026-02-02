@@ -1,14 +1,31 @@
 from confusable_homoglyphs import confusables
+import os
 import re
 import unicodedata
 from functools import cache
-import spacy
 
-_spacy_nlp = spacy.load("en_core_web_sm")
+_spacy_nlp = None
+
+
+def _get_spacy_nlp():
+    global _spacy_nlp
+
+    if os.getenv('DUO_DISABLE_SPACY', 'false').lower() in ['true', 't', '1', 'yes', 'y']:
+        return None
+
+    if _spacy_nlp is None:
+        import spacy
+        _spacy_nlp = spacy.load("en_core_web_sm")
+
+    return _spacy_nlp
 
 
 def remove_modifiers(text: str) -> str:
-    document = _spacy_nlp(text)
+    nlp = _get_spacy_nlp()
+    if nlp is None:
+        return text
+
+    document = nlp(text)
     modifier_pos = {"ADJ", "ADV"}
     was_last_token_dropped = False
 

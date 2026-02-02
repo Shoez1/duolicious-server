@@ -15,14 +15,6 @@ DB_USER = os.getenv('DUO_DB_USER')
 DB_PASS = os.getenv('DUO_DB_PASS')
 DB_NAME = os.getenv('DUO_DB_NAME')
 
-# Render PostgreSQL hardcoded (apenas para teste)
-if not DB_HOST and not _database_url:
-    DB_HOST = 'dpg-d5vvvp94tr6s73a48oi0-a.oregon-postgres.render.com'
-    DB_PORT = '5432'
-    DB_USER = 'duo_api_user'
-    DB_PASS = 'HvBbiNekPQh0yrDythvBFTeStIL3vW5r'
-    DB_NAME = 'duo_api'
-
 if _database_url and (not DB_HOST or not DB_PORT or not DB_USER or not DB_PASS or not DB_NAME):
     _u = urlparse(_database_url)
     if not DB_HOST:

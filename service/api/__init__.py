@@ -1,12 +1,7 @@
 from pathlib import Path
 from flask import request
+import importlib
 import duotypes as t
-from service import (
-    location,
-    person,
-    question,
-    search,
-)
 from database import api_tx
 import psycopg
 from service.api.decorators import (
@@ -31,6 +26,26 @@ from service.api.decorators import (
 import time
 from antiabuse.antispam.signupemail import normalize_email
 import json
+
+
+class _LazyModule:
+    def __init__(self, module_name: str):
+        self._module_name = module_name
+        self._module = None
+
+    def _load(self):
+        if self._module is None:
+            self._module = importlib.import_module(self._module_name)
+        return self._module
+
+    def __getattr__(self, item):
+        return getattr(self._load(), item)
+
+
+location = _LazyModule('service.location')
+person = _LazyModule('service.person')
+question = _LazyModule('service.question')
+search = _LazyModule('service.search')
 
 _init_sql_file = (
     Path(__file__).parent.parent.parent / 'init-api.sql')
